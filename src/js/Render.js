@@ -1,139 +1,206 @@
 export default class Render {
 	constructor(container) {
 		this.container = container;
-		this.submitFormListener;
-		this.addedImgsListener;
-		this.form;
-		this.addedImgs;
-		this.errorMess;
-		this.titleNewImg;
-		this.urlNewImg;
+
+		this.sectionAddImg;
+		this.inputSelectImg;
+
+		this.sectionTempImg;
+
+		this.addImgListeners = {
+			dragover: [],
+			drop: [],
+			change: [],
+		};
+		this.tempImgListeners = {
+			click: [],
+		};
 
 		this.renderPage();
 	}
 
 	renderPage() {
-		const form = this.renderForm();
-		this.form = form;
-		this.container.append(form);
+		const header = this.renderHeaderPage();
+		this.container.append(header);
 
-		const addedImgs = this.renderMainBodyPage();
-		this.addedImgs = addedImgs;
-		this.container.append(addedImgs);
+		const main = this.renderMainPage();
+		this.container.append(main);
 
 		this.registerEvent();
 	}
 
 	registerEvent() {
-		this.errorMess = this.form.querySelector(".add-img__error");
-		this.titleNewImg = this.form.querySelector("#add-img__title");
-		this.urlNewImg = this.form.querySelector("#add-img__link");
-
-		this.form.addEventListener("submit", () => {
+		document.addEventListener("dragover", (event) => {
+			this.addImgListeners.dragover.forEach((item) => item(event));
 			event.preventDefault();
-			this.submitFormListener();
+		});
+		this.sectionAddImg.addEventListener("drop", (event) => {
+			this.addImgListeners.drop.forEach((item) => item(event));
+			event.preventDefault();
+		});
+		this.inputSelectImg.addEventListener("change", (event) => {
+			this.addImgListeners.change.forEach((item) => item(event));
 		});
 
-		this.addedImgs.addEventListener("click", (event) => {
-			event.preventDefault();
-			this.addedImgsListener(event);
+		this.sectionTempImg.addEventListener("click", (event) => {
+			this.tempImgListeners.click.forEach((item) => item(event));
 		});
 	}
 
-	addSubmitFormListener(callback) {
-		this.submitFormListener = callback;
-	}
-	addImgsListener(callback) {
-		this.addedImgsListener = callback;
+	addImgListener(field, callback) {
+		this.addImgListeners[field].push(callback);
 	}
 
-	renderForm() {
-		const form = document.createElement("form");
-		form.classList.add("form-add-img");
-		const formHTML = `
-			<div class="add-img__main-block">
-				<label for="add-img__title" class="add-img__label">
-					<p class="label-img__text">
-						Название: 
-					</p>
-					<input type="text" class="label-img__input" id="add-img__title" placeholder="Добавьте название">
-				</label>
-					
-				<label for="add-img__link" class="add-img__label">
-					<p class="label-img__text">
-						Ссылка: 
-					</p>
-					<input type="text" class="label-img__input" id="add-img__link" placeholder="Добавьте ссылку">
-				</label>
-					
-				<p class="add-img__error hidden-item">
-				</p>
-			</div>
-				
-			<button class="add-img__button" type="submit">
-				Добавить
-			</button>
+	addTempImgListener(field, callback) {
+		this.tempImgListeners[field].push(callback);
+	}
+
+	renderHeaderPage() {
+		const header = document.createElement("header");
+		header.classList.add("container", "header");
+		header.innerHTML = `
+			<h1 class="header-title">
+				Your Little Image Manager
+			</h1>
 		`;
 
-		form.innerHTML = formHTML;
-		return form;
+		return header;
 	}
 
-	renderMainBodyPage() {
-		const addedImgs = document.createElement("aside");
-		addedImgs.classList.add("img-list");
+	renderMainPage() {
+		const main = document.createElement("main");
+		main.classList.add("container", "main");
 
-		return addedImgs;
+		const sectionAddImg = this.renderSectionAddImg();
+		this.sectionAddImg = sectionAddImg;
+		main.append(sectionAddImg);
+
+		const sectionTempImg = this.renderSectionTempImg();
+		this.sectionTempImg = sectionTempImg;
+		main.append(sectionTempImg);
+
+		return main;
 	}
 
-	renderListImgs(imgs) {
-		for (let img of imgs) {
-			this.renderImg(img);
-		}
-	}
+	renderSectionAddImg() {
+		const sectionAddImg = document.createElement("section");
+		sectionAddImg.classList.add("section", "add-img");
+		sectionAddImg.innerHTML = `
+			<label for="add-img__select-button" class="add-img__label">
+				<input class="add-img__button hidden-item" type="file" multiple="true" id="add-img__select-button">
 
-	renderImg(img) {
-		const newImg = document.createElement("div");
-		const imgHtml = `
-			<div class="img-container">
-				<img class="img-container__img" src="${img.image.url}" alt="${img.image.title}">
+				<div class="add-img__drag-area">
+					<div class="add-img__drag-area-descr">
+						<p class="add-img__drag-area__p">
+							Drag and Drop file here
+						</p>
+						<p class="add-img__drag-area__p">
+							or Click to select
+						</p>
+					</div>
 				</div>
-				<p class="img-name">
-					${img.image.title}
-				</p>
-				<div class="img-close">
-					&times;
-				</div>
+			</label>
 		`;
+
+		const inputSelectImg = sectionAddImg.querySelector(".add-img__button");
+		this.inputSelectImg = inputSelectImg;
+
+		const dropArea = sectionAddImg.querySelector(".add-img__drag-area");
+		this.dropArea = dropArea;
+
+		return sectionAddImg;
+	}
+
+	renderSectionTempImg() {
+		const sectionTempImg = document.createElement("section");
+		sectionTempImg.classList.add("section", "temp-img", "hidden-item");
+		sectionTempImg.innerHTML = `
+			<h2 class="section-title temp-img__title">
+				New Images
+			</h2>
+			<ul class="list-img temp-list-img">
+			</ul>		
+		`;
+
+		const listTempImgs = sectionTempImg.querySelector("ul.list-img");
+		this.listTempImgs = listTempImgs;
+
+		return sectionTempImg;
+	}
+
+	renderImg(img, section) {
+		const newImg = document.createElement("li");
+		newImg.classList.add(`img-item`, `${section}-img`);
 		newImg.dataset.id = img.id;
-		newImg.classList.add("img-item");
-		newImg.innerHTML = imgHtml;
 
-		this.addedImgs.prepend(newImg);
+		let blockButton;
+		if (section === "temp") {
+			blockButton = `
+				<button class="img-button img-button__save" data-id="${img.id}">
+					Save
+				</button>
+				<button class="img-button img-button__cancel" data-id="${img.id}">
+					Remove
+				</button>
+			`;
+		}
+
+		if (section === "saved") {
+			blockButton = `
+				<button class="img-button img-button__remove">
+					Remove
+				</button>
+			`;
+		}
+
+		newImg.innerHTML = `
+			<div class="img-container">
+				<img class="img-img" src="${img.src}" alt="${img.name}">
+			</div>
+			<div class="img-button__block">
+				${blockButton}
+			</div>
+		`;
+
+		return newImg;
 	}
 
-	showError(message) {
-		this.errorMess;
-		this.errorMess.textContent = message;
-		this.errorMess.classList.remove("hidden-item");
+	addTempImg(img) {
+		const imgItem = this.renderImg(img, "temp");
+		this.showSectionTempImgs();
+		this.listTempImgs.append(imgItem);
 
-		setTimeout(() => {
-			this.closeError();
-		}, 1000);
+		const imgEl = imgItem.querySelector(".img-img");
+		this.clearBlobFromMemory(imgEl);
 	}
 
-	closeError() {
-		this.errorMess.textContent = "";
-		this.errorMess.classList.add("hidden-item");
+	clearBlobFromMemory(img) {
+		img.addEventListener("load", () => {
+			URL.revokeObjectURL(img.src);
+		});
 	}
 
-	clearForm() {
-		this.titleNewImg.value = "";
-		this.urlNewImg.value = "";
+	showSectionTempImgs() {
+		this.sectionTempImg.classList.remove("hidden-item");
 	}
 
-	removeImg(id) {
-		const img = this.addedImgs.querySelector(`[data-id="${id}"]`);
+	hideSectionTempImgs() {
+		this.sectionTempImg.classList.add("hidden-item");
+	}
+
+	activeDropArea() {
+		this.dropArea.classList.add("add-img__drag-area_hover");
+	}
+
+	disableDropArea() {
+		this.dropArea.classList.remove("add-img__drag-area_hover");
+	}
+
+	removeImgNode(img, countImg) {
 		img.remove();
+
+		if (countImg === 0) {
+			this.hideSectionTempImgs();
+		}
 	}
 }
